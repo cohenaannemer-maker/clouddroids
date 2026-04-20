@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>CloudDroid</title>
+<link rel="manifest" href="/manifest.json"/>
+<meta name="theme-color" content="#6366f1"/>
+<link rel="apple-touch-icon" href="/icons/icon-192.png"/>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0f172a;--surface:#1e293b;--surface2:#334155;
+    --accent:#6366f1;--accent2:#818cf8;--green:#22c55e;
+    --red:#ef4444;--text:#f1f5f9;--muted:#94a3b8;
+    --border:#334155;--radius:12px;
+  }
+  body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh}
+  header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
+  header img{width:36px;height:36px;border-radius:8px}
+  header h1{font-size:1.2rem;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  header .status-pill{margin-left:auto;display:flex;align-items:center;gap:6px;background:var(--surface2);border-radius:20px;padding:4px 12px;font-size:.75rem}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  nav{display:flex;background:var(--surface);border-bottom:1px solid var(--border);overflow-x:auto}
+  nav button{flex:1;min-width:80px;padding:12px 8px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:.8rem;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap}
+  nav button.active{color:var(--accent);border-bottom-color:var(--accent)}
+  nav button:hover{color:var(--text)}
+  main{padding:16px;max-width:700px;margin:0 auto}
+  .tab{display:none} .tab.active{display:block}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px}
+  .card h2{font-size:.85rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px}
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .stat{background:var(--surface2);border-radius:8px;padding:12px;text-align:center}
+  .stat .val{font-size:1.4rem;font-weight:700;color:var(--accent2)}
+  .stat .lbl{font-size:.72rem;color:var(--muted);margin-top:2px}
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:8px;border:none;cursor:pointer;font-size:.85rem;font-weight:600;transition:all .2s}
+  .btn-primary{background:var(--accent);color:#fff} .btn-primary:hover{background:var(--accent2)}
+  .btn-danger{background:var(--red);color:#fff}
+  .btn-ghost{background:var(--surface2);color:var(--text)} .btn-ghost:hover{background:var(--border)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .slider-row{display:flex;align-items:center;gap:10px;margin-top:10px}
+  .slider-row label{font-size:.82rem;color:var(--muted);width:80px}
+  input[type=range]{flex:1;accent-color:var(--accent)}
+  .slider-row span{width:36px;text-align:right;font-size:.82rem;color:var(--accent2)}
+  .app-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:10px}
+  .app-item{background:var(--surface2);border-radius:10px;padding:12px 6px;text-align:center;cursor:pointer;border:2px solid transparent;transition:all .2s}
+  .app-item:hover{border-color:var(--accent)}
+  .app-item.installed{border-color:var(--green)}
+  .app-icon{font-size:1.8rem;margin-bottom:4px}
+  .app-name{font-size:.68rem;color:var(--text);word-break:break-word}
+  .app-cat{font-size:.6rem;color:var(--muted);margin-top:2px}
+  .app-badge{font-size:.58rem;color:var(--green);margin-top:2px}
+  .folder-list{display:flex;flex-direction:column;gap:8px}
+  .folder-item{background:var(--surface2);border-radius:8px;padding:12px;display:flex;align-items:center;gap:10px}
+  .folder-item .info{flex:1}
+  .folder-item .name{font-size:.85rem;font-weight:600}
+  .folder-item .meta{font-size:.72rem;color:var(--muted);margin-top:2px}
+  .folder-item .size{font-size:.8rem;color:var(--accent2);font-weight:600}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--accent);color:var(--text);padding:10px 20px;border-radius:20px;font-size:.82rem;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none}
+  .toast.show{opacity:1}
+  .progress-bar{height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-top:8px}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:3px;transition:width .5s}
+  .filter-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+  .filter-btn{padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;font-size:.75rem;transition:all .2s}
+  .filter-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+</style>
+</head>
+<body>
+
+<header>
+  <img src="/icons/icon-72.png" alt="CloudDroid"/>
+  <h1>CloudDroid</h1>
+  <div class="status-pill"><span class="dot"></span><span id="hdr-status">Loading…</span></div>
+</header>
+
+<nav>
+  <button class="active" onclick="showTab('dashboard',this)">📊 Dashboard</button>
+  <button onclick="showTab('android',this)">🤖 Android</button>
+  <button onclick="showTab('apps',this)">📱 Apps</button>
+  <button onclick="showTab('storage',this)">☁️ Storage</button>
+</nav>
+
+<main>
+  <!-- DASHBOARD -->
+  <div class="tab active" id="tab-dashboard">
+    <div class="card">
+      <h2>System Status</h2>
+      <div class="stat-grid" id="stat-grid">
+        <div class="stat"><div class="val">…</div><div class="lbl">Platform</div></div>
+        <div class="stat"><div class="val">…</div><div class="lbl">Region</div></div>
+        <div class="stat"><div class="val">…</div><div class="lbl">CPU %</div></div>
+        <div class="stat"><div class="val">…</div><div class="lbl">RAM %</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Android Info</h2>
+      <div class="stat-grid" id="android-info-grid">
+        <div class="stat"><div class="val">…</div><div class="lbl">Version</div></div>
+        <div class="stat"><div class="val">…</div><div class="lbl">Uptime</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ANDROID CONTROL -->
+  <div class="tab" id="tab-android">
+    <div class="card">
+      <h2>Android Controls</h2>
+      <div class="stat-grid" id="android-stats">
+        <div class="stat"><div class="val" id="a-status">…</div><div class="lbl">Status</div></div>
+        <div class="stat"><div class="val" id="a-uptime">…</div><div class="lbl">Uptime</div></div>
+        <div class="stat"><div class="val" id="a-brightness">…</div><div class="lbl">Brightness</div></div>
+        <div class="stat"><div class="val" id="a-volume">…</div><div class="lbl">Volume</div></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="androidAction('start')">▶ Start</button>
+        <button class="btn btn-danger"  onclick="androidAction('stop')">⏹ Stop</button>
+        <button class="btn btn-ghost"   onclick="androidAction('restart')">🔄 Restart</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Display & Audio</h2>
+      <div class="slider-row">
+        <label>☀️ Brightness</label>
+        <input type="range" min="0" max="100" value="80" id="sl-brightness" oninput="document.getElementById('v-brightness').textContent=this.value+'%'" onchange="androidAction('brightness',this.value)"/>
+        <span id="v-brightness">80%</span>
+      </div>
+      <div class="slider-row">
+        <label>🔊 Volume</label>
+        <input type="range" min="0" max="100" value="60" id="sl-volume" oninput="document.getElementById('v-volume').textContent=this.value+'%'" onchange="androidAction('volume',this.value)"/>
+        <span id="v-volume">60%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- APPS -->
+  <div class="tab" id="tab-apps">
+    <div class="card">
+      <h2>App Manager</h2>
+      <div class="filter-row" id="filter-row">
+        <button class="filter-btn active" onclick="filterApps('All',this)">All</button>
+        <button class="filter-btn" onclick="filterApps('Social',this)">Social</button>
+        <button class="filter-btn" onclick="filterApps('Entertainment',this)">Entertainment</button>
+        <button class="filter-btn" onclick="filterApps('Utility',this)">Utility</button>
+        <button class="filter-btn" onclick="filterApps('Music',this)">Music</button>
+      </div>
+      <div class="app-grid" id="app-grid">Loading apps…</div>
+    </div>
+  </div>
+
+  <!-- STORAGE -->
+  <div class="tab" id="tab-storage">
+    <div class="card">
+      <h2>Cloud Storage</h2>
+      <div class="stat-grid" id="storage-stats">
+        <div class="stat"><div class="val" id="s-total">…</div><div class="lbl">Total (GB)</div></div>
+        <div class="stat"><div class="val" id="s-avail">…</div><div class="lbl">Available (GB)</div></div>
+      </div>
+      <div class="progress-bar" style="margin-top:12px"><div class="progress-fill" id="s-bar" style="width:0%"></div></div>
+      <div style="font-size:.72rem;color:var(--muted);margin-top:6px" id="s-label">Loading…</div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="syncStorage()">🔄 Sync Now</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Folders</h2>
+      <div class="folder-list" id="folder-list">Loading…</div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let allApps = [];
+let currentFilter = 'All';
+
+function showTab(name, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+async function api(path, method='GET', body=null) {
+  const opts = { method, headers: {'Content-Type':'application/json'} };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch('/api/' + path, opts);
+  return r.json();
+}
+
+async function loadStatus() {
+  try {
+    const d = await api('status');
+    document.getElementById('hdr-status').textContent = d.android || 'Online';
+    const g = document.getElementById('stat-grid');
+    g.innerHTML = `
+      <div class="stat"><div class="val">${d.platform||'Vercel'}</div><div class="lbl">Platform</div></div>
+      <div class="stat"><div class="val">${d.region||'iad1'}</div><div class="lbl">Region</div></div>
+      <div class="stat"><div class="val">${d.cpu||'—'}%</div><div class="lbl">CPU</div></div>
+      <div class="stat"><div class="val">${d.ram||'—'}%</div><div class="lbl">RAM</div></div>`;
+    const a = document.getElementById('android-info-grid');
+    a.innerHTML = `
+      <div class="stat"><div class="val" style="font-size:.9rem">Android 13</div><div class="lbl">Version</div></div>
+      <div class="stat"><div class="val">${d.uptime||'—'}</div><div class="lbl">Uptime</div></div>`;
+  } catch(e) { document.getElementById('hdr-status').textContent = 'Offline'; }
+}
+
+async function loadAndroid() {
+  try {
+    const d = await api('android');
+    const a = d.android;
+    document.getElementById('a-status').textContent = a.running ? '🟢 On' : '🔴 Off';
+    document.getElementById('a-uptime').textContent = a.uptime;
+    document.getElementById('a-brightness').textContent = a.brightness + '%';
+    document.getElementById('a-volume').textContent = a.volume + '%';
+    document.getElementById('sl-brightness').value = a.brightness;
+    document.getElementById('v-brightness').textContent = a.brightness + '%';
+    document.getElementById('sl-volume').value = a.volume;
+    document.getElementById('v-volume').textContent = a.volume + '%';
+  } catch(e) {}
+}
+
+async function androidAction(action, value) {
+  try {
+    const d = await api('android', 'POST', { action, value });
+    toast(d.message || action + ' done');
+    loadAndroid();
+  } catch(e) { toast('Error: ' + e.message); }
+}
+
+async function loadApps() {
+  try {
+    const d = await api('apps');
+    allApps = d.apps;
+    renderApps();
+  } catch(e) { document.getElementById('app-grid').textContent = 'Failed to load apps'; }
+}
+
+function filterApps(cat, btn) {
+  currentFilter = cat;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderApps();
+}
+
+function renderApps() {
+  const filtered = currentFilter === 'All' ? allApps : allApps.filter(a => a.cat === currentFilter);
+  const g = document.getElementById('app-grid');
+  g.innerHTML = filtered.map(app => `
+    <div class="app-item ${app.installed?'installed':''}" onclick="toggleApp('${app.id}','${app.installed?'uninstall':'install'}','${app.name}')">
+      <div class="app-icon">${app.icon}</div>
+      <div class="app-name">${app.name}</div>
+      <div class="app-cat">${app.cat}</div>
+      ${app.installed ? '<div class="app-badge">✓ Installed</div>' : ''}
+    </div>`).join('');
+}
+
+async function toggleApp(id, action, name) {
+  try {
+    const d = await api('apps', 'POST', { action, id });
+    toast(d.message || action + ' done');
+    const app = allApps.find(a => a.id === id);
+    if (app) app.installed = d.app.installed;
+    renderApps();
+  } catch(e) { toast('Error'); }
+}
+
+async function loadStorage() {
+  try {
+    const d = await api('storage');
+    document.getElementById('s-total').textContent = d.total;
+    document.getElementById('s-avail').textContent = d.available.toFixed(1);
+    document.getElementById('s-bar').style.width = (d.percent * 100).toFixed(1) + '%';
+    document.getElementById('s-label').textContent = `${d.used} GB used of ${d.total} GB · Last sync: ${new Date(d.last_sync).toLocaleTimeString()}`;
+    document.getElementById('folder-list').innerHTML = d.folders.map(f => `
+      <div class="folder-item">
+        <span style="font-size:1.5rem">${f.icon}</span>
+        <div class="info"><div class="name">${f.name}</div><div class="meta">${f.files} files</div></div>
+        <div class="size">${f.size}</div>
+      </div>`).join('');
+  } catch(e) {}
+}
+
+async function syncStorage() {
+  toast('Syncing…');
+  try {
+    const d = await api('storage', 'POST', { action: 'sync' });
+    toast(d.message + ' · ' + d.files_synced + ' files');
+    loadStorage();
+  } catch(e) { toast('Sync failed'); }
+}
+
+// Init
+loadStatus();
+loadAndroid();
+loadApps();
+loadStorage();
+setInterval(loadStatus, 30000);
+
+// Register service worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+export default function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  const up = Math.floor(Date.now() / 1000) % 86400;
+  res.json({
+    ok: true,
+    platform: 'Vercel',
+    region: process.env.VERCEL_REGION || 'iad1',
+    uptime: `${Math.floor(up/3600)}h ${Math.floor((up%3600)/60)}m`,
+    cpu: (5 + Math.random() * 12).toFixed(1),
+    ram: (22 + Math.random() * 18).toFixed(1),
+    android: 'Waydroid · Android 13',
+    timestamp: new Date().toISOString(),
+  });
+}
