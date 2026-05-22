@@ -1,19 +1,17 @@
-{
-  "name": "CloudDroid",
-  "short_name": "CloudDroid",
-  "description": "Virtual Android Emulator in the Cloud",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#6366f1",
-  "orientation": "portrait",
-  "icons": [
-    { "src": "/icons/icon-72.png",  "sizes": "72x72",   "type": "image/png" },
-    { "src": "/icons/icon-128.png", "sizes": "128x128", "type": "image/png" },
-    { "src": "/icons/icon-144.png", "sizes": "144x144", "type": "image/png" },
-    { "src": "/icons/icon-152.png", "sizes": "152x152", "type": "image/png" },
-    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icons/icon-384.png", "sizes": "384x384", "type": "image/png" },
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
-  ]
-}
+const CACHE = 'clouddroid-v1';
+const ASSETS = ['/', '/index.html', '/manifest.json', '/icons/icon-192.png'];
+
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', e => {
+  e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))));
+  self.clients.claim();
+});
+
+self.addEventListener('fetch', e => {
+  if (e.request.url.includes('api.github.com')) return;
+  e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
+});
